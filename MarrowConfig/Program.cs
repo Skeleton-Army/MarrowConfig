@@ -80,11 +80,8 @@ class Program
 
             if (result != StartServerResult.Started)
             {
-                
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(
-                "Adb server Failed to start.\n" +
-                $"Please run the following command to kill adb server `{GetAdbLocation()} kill-server` and re-run this program.");
+                Console.WriteLine("Adb server Failed to start!");
                 Console.ForegroundColor = DefaultConsoleColor;
                 Environment.Exit(1);
             }
@@ -101,8 +98,10 @@ class Program
         AdbClient adbClient = new AdbClient();
         adbClient.Connect($"{Ip}:{Port}");
         DeviceData device = adbClient.GetDevices().FirstOrDefault();
+
         RunShellCommand(adbClient, device, "rm -f /sdcard/config/Marrow.conf");
         RunShellCommand(adbClient, device, "mkdir /sdcard/config");
+
         using (SyncService syncService = new SyncService(device))
         {
             using (FileStream fileStream = File.OpenRead(FilePath))
