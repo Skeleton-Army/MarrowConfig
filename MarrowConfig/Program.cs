@@ -23,7 +23,7 @@ class Program
         string[] AdbCofiguration = GetValues(["Robot's Ip", "Robot's adb port"]);
         ConnectAndUpload(AdbCofiguration[0], AdbCofiguration[1], LocalFilePath);
         File.Delete(LocalFilePath);
-        Console.WriteLine("The config file has been uploaded to the Robots SDCard at \"/sdcard/config/Marrow.conf\"");
+        Console.WriteLine("The config file has been successfully uploaded to the Robots SDCard at \"/sdcard/config/Marrow.conf\"");
     }
     static string[] GetValues(string[] field)
     {
@@ -48,10 +48,10 @@ class Program
     static void CreateFile(string FilePath, string[] key, string[] value)
     {
         string[] KeyValue = new string[key.Length];
-        File.AppendAllLines(FilePath, ["#############", "##MarrowFTP##", "#############", " "]);
+        File.AppendAllLines(FilePath, ["#######", "##FTP##", "#######", " "]);
         for (int i = 0; i < key.Length; i++)
         {
-            KeyValue[i] = $"{key[i]}={value[i]}";
+            KeyValue[i] = $"{key[i]} = \"{value[i]}\"";
         }
         File.AppendAllLines(FilePath, KeyValue);
     }
