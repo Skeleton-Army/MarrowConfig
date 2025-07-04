@@ -2,58 +2,97 @@
 
 using System.Runtime.InteropServices;
 using AdvancedSharpAdbClient;
+using AdvancedSharpAdbClient.Exceptions;
 using AdvancedSharpAdbClient.Models;
 using AdvancedSharpAdbClient.Receivers;
+using CommandLine;
 
 class Program
 {
     public static ConsoleColor DefaultConsoleColor = Console.ForegroundColor;
-    static string LocalFilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/Marrow.conf"; 
-    readonly static string[] ConfigValues = ["FtpIp", "FtpPort", "FtpUsername", "FtpPassword"];
+    static readonly string LocalFilePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/Marrow.conf";
+    static Dictionary<string, string>? ConfigValues;
+    static AdbClient? adbClient;
+    static DeviceData deviceData;
+    static Options? options;
+    static string? Preset;
     static void Main(string[] args)
     {
+        Parser.Default.ParseArguments<Options>(args)
+            .WithParsed(CreateOptionsObject);
         if (File.Exists(LocalFilePath))
         {
             File.Delete(LocalFilePath);
         }
-        CreateFile(LocalFilePath, ConfigValues, GetValues(["Ftp server Ip addres", "Port for the Ftp connection (usally 20 or 21)", "username for the Ftp server", "password for the Ftp server"]));
+        try
+        {
+            ConfigValues = SetupDefaultDictonaries(options.Perset);
+        }
+        catch (Exception)
+        {
+            Environment.Exit(1);
+        }
+
+        CreateFile(LocalFilePath, GetValues(ConfigValues));
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine("\nPlease make sure you are connected to the Robot's WIFI network!");
         Console.ForegroundColor = DefaultConsoleColor;
-        string[] AdbCofiguration = GetValues(["Robot's Ip", "Robot's adb port"]);
-        ConnectAndUpload(AdbCofiguration[0], AdbCofiguration[1], LocalFilePath);
+        ConnectToAdbDevice(options.RobotIp, options.RobotPort);
+        UploadMarrowConf(LocalFilePath);
+        AdbDisconnect(options.RobotIp, options.RobotPort);
         File.Delete(LocalFilePath);
-        Console.WriteLine("The config file has been successfully uploaded to the Robots SDCard at \"/sdcard/config/Marrow.conf\"");
+        Console.WriteLine("The config file has been successfully uploaded to the Robots SDCard at \"/sdcard/config/Marrow.conf\"\n");
     }
-    static string[] GetValues(string[] field)
+    static void CreateOptionsObject(Options opts)
     {
-    #pragma warning disable CS8601 // Possible null reference assignment.
-        string[] Values = new string[field.Length];
-        
-        for (int i = 0; i < field.Length; i++)
-        {
-            Console.Write($"What is the {field[i]} : ");
-            Values[i] = Console.ReadLine();
-            while (String.IsNullOrEmpty(Values[i]))
-            {
-              Console.WriteLine("Value can't be empty!");
-              Console.Write($"What is the {field[i]} : ");
-              Values[i] = Console.ReadLine();
+        options = opts;
+    }
 
-            }
-        }
-        return Values;
-    #pragma warning restore CS8601 // Possible null reference assignment.
-    }
-    static void CreateFile(string FilePath, string[] key, string[] value)
+    static Dictionary<string,string> GetValues(Dictionary<string, string> keyValuePairs)
     {
-        string[] KeyValue = new string[key.Length];
+        string[] Keys = [.. keyValuePairs.Keys];
+        if (Preset is null)
+        {
+            Preset = "";
+        }
+
+        string? input;
+        for (int i = 0; i < keyValuePairs.Count; i++)
+        {
+            do
+            {
+                Console.Write($"Whats is the {SplitStringAt(Keys[i], Preset)}: ");
+                input = Console.ReadLine();
+                if (String.IsNullOrEmpty(input))
+                {
+                    Console.WriteLine("Value can't be empty");
+                }
+            } while (String.IsNullOrEmpty(input));
+            keyValuePairs[Keys[i]] = input;
+        }
+        return keyValuePairs;
+    }
+
+    static void CreateFile(string FilePath, Dictionary<string, string> keyValuePairs)
+    {
+        string[] KeyValue = new string[keyValuePairs.Count];
+        string[] key = [.. keyValuePairs.Keys];
+        string[] value = [.. keyValuePairs.Values];
         File.AppendAllLines(FilePath, ["#######", "##FTP##", "#######", " "]);
-        for (int i = 0; i < key.Length; i++)
+        for (int i = 0; i < keyValuePairs.Count; i++)
         {
             KeyValue[i] = $"{key[i]} = \"{value[i]}\"";
         }
         File.AppendAllLines(FilePath, KeyValue);
+    }
+    static string SplitStringAt(string str, string splitAfter)
+    {
+        int index = str.IndexOf(splitAfter);
+        if (index == -1)
+        {
+            return str;
+        }
+        return str.Insert(index + splitAfter.Length, " ");
     }
     static string GetAdbLocation()
     {
@@ -70,6 +109,23 @@ class Program
             return $@"{Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)}/Library/Android/sdk/platform-tools/adb";
         }
         return "";
+    }
+    public static Dictionary<string, string>? SetupDefaultDictonaries(char preset)
+    {
+        switch (preset)
+        {
+            case 'f':
+                Preset = "Ftp";
+                return new Dictionary<string, string>
+                {
+                    {"FtpIp", ""},
+                    {"FtpPort", ""},
+                    {"FtpUsername", ""},
+                    {"FtpPassword", ""}
+                };
+            default:
+                return null;
+        }
     }
     static void StartAdbServer()
     {
@@ -92,23 +148,49 @@ class Program
         ConsoleOutputReceiver receiver = new ConsoleOutputReceiver();
         adbClient.ExecuteRemoteCommand(command, device, receiver);
     }
-    static void ConnectAndUpload(string Ip, string Port, string FilePath)
+    static void ConnectToAdbDevice(string Ip, string Port)
     {
+        if (Ip is null || Port is null)
+        {
+            throw new ArgumentException("""
+            Congrats! 
+            You got to the part where the program needs to connect to the Robot. and still have atleast 1 null argument, even after my many checks.
+            I have nothing to say. You are just that special. 
+            The program is will now terminate, please retry to run it.
+            Have a great rest of your day. 
+
+            P.S If you see this message while using the program and aren't intentionally messing with it, send me screenshot on discord @opi3636.
+            """);
+        }
         StartAdbServer();
-        AdbClient adbClient = new AdbClient();
+        adbClient = new AdbClient();
         adbClient.Connect($"{Ip}:{Port}");
-        DeviceData device = adbClient.GetDevices().FirstOrDefault();
+        deviceData = adbClient.GetDevices().FirstOrDefault();
+    }
 
-        RunShellCommand(adbClient, device, "rm -f /sdcard/config/Marrow.conf");
-        RunShellCommand(adbClient, device, "mkdir /sdcard/config");
+    static void AdbDisconnect(string Ip, string Port)
+    {
+        if (adbClient is null)
+        {
+            throw new AdbException("adbClient object has not been properly initialized");
+        }
+        adbClient.Disconnect($"{Ip}:{Port}");
+    }
+    static void UploadMarrowConf(string FilePath)
+    {
+        if (adbClient is null)
+        {
+            throw new AdbException("adbClient object has not been properly initialized");
+        }
+        RunShellCommand(adbClient, deviceData, "rm -f /sdcard/config/Marrow.conf");
+        RunShellCommand(adbClient, deviceData, "mkdir /sdcard/config");
 
-        using (SyncService syncService = new SyncService(device))
+        using (SyncService syncService = new SyncService(deviceData))
         {
             using (FileStream fileStream = File.OpenRead(FilePath))
             {
                 syncService.Push(fileStream, "/sdcard/config/Marrow.conf", UnixFileStatus.DefaultFileMode, DateTimeOffset.Now, null);
             }
         }     
-        adbClient.Disconnect($"{Ip}:{Port}");
     }
 }
