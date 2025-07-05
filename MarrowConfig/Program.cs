@@ -37,12 +37,35 @@ class Program
         Console.ForegroundColor = ConsoleColor.Red;
         Console.WriteLine("\nPlease make sure you are connected to the Robot's WIFI network!");
         Console.ForegroundColor = DefaultConsoleColor;
-        ConnectToAdbDevice(options.RobotIp, options.RobotPort);
-        UploadMarrowConf(LocalFilePath);
-        AdbDisconnect(options.RobotIp, options.RobotPort);
+        Console.WriteLine("Connecting to the Robot, please wait...\n");
+
+        try
+        {
+            ConnectToAdbDevice(options.RobotIp, options.RobotPort);
+            System.Console.WriteLine($"Connected to Robot at {options.RobotIp}:{options.RobotPort}");
+            System.Console.WriteLine("Uploading Marrow.conf to the Robot's SDCard, please wait...\n");
+            UploadMarrowConf(LocalFilePath);
+            Console.WriteLine("Marrow.conf has been successfully uploaded to the Robot's SDCard at \"/sdcard/config/Marrow.conf\"\n");
+            Console.WriteLine("Disconnecting from the Robot, please wait...\n"); 
+            AdbDisconnect(options.RobotIp, options.RobotPort);
+        }
+        catch (AdbException e)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"An error occurred while trying to connect to the Robot: {e.Message}");
+            Console.ForegroundColor = DefaultConsoleColor;
+            Environment.Exit(1);
+        }
+        catch (Exception e)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"An unexpected error occurred: {e.Message}");
+            Console.ForegroundColor = DefaultConsoleColor;
+            Environment.Exit(1);
+        }
         File.Delete(LocalFilePath);
-        Console.WriteLine("The config file has been successfully uploaded to the Robots SDCard at \"/sdcard/config/Marrow.conf\"\n");
-    }
+        Console.WriteLine("Disconnected from the Robot. The program will now exit.");
+        Environment.Exit(0);}
     static void CreateOptionsObject(Options opts)
     {
         options = opts;
