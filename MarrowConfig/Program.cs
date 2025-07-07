@@ -35,14 +35,14 @@ class Program
 
         CreateFile(LocalFilePath, GetValues(ConfigValues));
         Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine("\nPlease make sure you are connected to the Robot's WIFI network!");
+        Console.WriteLine("\nPlease make sure you are connected to the Robot's WIFI network!\n");
         Console.ForegroundColor = DefaultConsoleColor;
         Console.WriteLine("Connecting to the Robot, please wait...\n");
 
         try
         {
             ConnectToAdbDevice(options.RobotIp, options.RobotPort);
-            System.Console.WriteLine($"Connected to Robot at {options.RobotIp}:{options.RobotPort}");
+            System.Console.WriteLine($"Connected to Robot at {options.RobotIp}:{options.RobotPort}\n");
             System.Console.WriteLine("Uploading Marrow.conf to the Robot's SDCard, please wait...\n");
             UploadMarrowConf(LocalFilePath);
             Console.WriteLine("Marrow.conf has been successfully uploaded to the Robot's SDCard at \"/sdcard/config/Marrow.conf\"\n");
@@ -141,7 +141,7 @@ class Program
                 Preset = "Ftp";
                 return new Dictionary<string, string>
                 {
-                    {"FtpIp", ""},
+                    {"FtpServer", ""},
                     {"FtpPort", ""},
                     {"FtpUsername", ""},
                     {"FtpPassword", ""}
@@ -177,12 +177,12 @@ class Program
         {
             throw new ArgumentException("""
             Congrats! 
-            You got to the part where the program needs to connect to the Robot. and still have atleast 1 null argument, even after my many checks.
+            You got to the part where the program needs to connect to the Robot. and still have at least 1 null argument, even after my many checks.
             I have nothing to say. You are just that special. 
-            The program is will now terminate, please retry to run it.
+            The program will now terminate, please retry to run it.
             Have a great rest of your day. 
 
-            P.S If you see this message while using the program and aren't intentionally messing with it, send me screenshot on discord @opi3636.
+            P.S If you see this message while using the program and aren't intentionally messing with it, send me a screenshot on discord @opi3636.
             """);
         }
         StartAdbServer();
