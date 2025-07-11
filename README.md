@@ -5,17 +5,26 @@
 A CLI-tool to automaticly create and upload configuration file for [Marrow](https://github.com/Skeleton-Army/Marrow) FTC Library by SkeletonArmy#23643
 
 ---
-## 🔧 Usage
+## 📦 Download the latest release
 
-Most basic usage
+- **Windows 64bit**: [MarrowConfig-win64.exe](https://github.com/Skeleton-Army/MarrowConfig/releases/latest/download/MarrowConfig-win64.exe) 
+- **Windows 64bit self-contained:** [MarrowConfig-win64_SC.exe](https://github.com/Skeleton-Army/MarrowConfig/releases/latest/download/MarrowConfig-win64_SC.exe) 
+- **Windows 32bit**: [MarrowConfig-win32.exe](https://github.com/Skeleton-Army/MarrowConfig/releases/latest/download/MarrowConfig-win32.exe) 
+- **Linux**: [MarrowConfig-linux64](https://github.com/Skeleton-Army/MarrowConfig/releases/latest/download/MarrowConfig-linux64) 
+- **macOS**: Coming soon 🍎
+
+## 🔧 Usage
+Replace `<executable_name>` with the file you downloaded.
+
+Connect to the Robot using ADB and selecting the FTP preset
 
 ``` bash
-./MarrowConfig.exe --adb_ip 191.168.x.x --adb_port 5555 -p f
+./<executable_name> --adb_ip 191.168.x.x --adb_port 5555 -p f
 ```
  Display help message 
 
  ```bash
- ./MarrowConfig.exe --help
+./<executable_name> --help
  ```
 
  ---
