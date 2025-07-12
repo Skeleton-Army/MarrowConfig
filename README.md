@@ -33,9 +33,14 @@ FTP is an **insecrue** protocol.
 
 **DO NOT** use a password you use for other accounts are services, make sure to turn off the FTP server after use. 
 
-## ⭐ Contributingand
-All contributing are welcome! Feel free to sumbit a Pull Request.
+## ⭐ contributing
+All contributions are welcome! Feel free to sumbit a Pull Request.
 
 ## ✒️ Licence
 This project is licensed under the MIT License. See the LICENSE file for more information.
 
+## 🛣️Roadmap
+- [x] Initial Relase
+- [ ] Support the `ip:port` syntax in the `--adb_ip` argument.
+- [ ] Add a GUI option using AvaloniaUI
+- [ ] Code optimization
